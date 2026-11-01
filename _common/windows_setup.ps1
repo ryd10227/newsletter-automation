@@ -220,8 +220,12 @@ while ($true) {
       Write-Host ""
       Invoke-PhotoshopAutomation
       if ((Test-Path -LiteralPath $ResultPsd -PathType Leaf) -and (Test-Path -LiteralPath $WebPng -PathType Leaf)) {
-        Write-Host "확인: 결과 PSD와 PNG가 저장됐는지, 배너 1·3 모서리가 둥근지 확인하세요." -ForegroundColor Cyan
-        Write-Host "확인: images\bg.png에 해외시장뉴스 상단 배너의 배경·오브제·텍스트가 모두 포함됐는지 확인하세요." -ForegroundColor Cyan
+        Write-Host "============================================================" -ForegroundColor Cyan
+        Write-Host "[검수 필수] 2단계 Photoshop 결과" -ForegroundColor Cyan
+        Write-Host "============================================================" -ForegroundColor Cyan
+        Write-Host "[ ] 결과 PSD와 전체 PNG가 저장되었는지 확인"
+        Write-Host "[ ] 배너 1·3의 모서리가 둥글게 잘렸는지 확인"
+        Write-Host "[ ] images\bg.png에 해외시장뉴스 상단 배너의 배경·오브제·텍스트가 모두 포함됐는지 확인"
       }
     }
 
@@ -246,8 +250,11 @@ while ($true) {
       if ($VdiExitCode -eq 0 -and $MutuExitCode -eq 0) {
         Write-Host "Created: $VdiOutput" -ForegroundColor Green
         Write-Host "Created: $MutuOutput" -ForegroundColor Green
-        Write-Host "확인: 두 HTML을 열어 해외시장뉴스·사업안내·아카데미·배너 등 모든 텍스트와 링크가 일치하는지 확인하세요." -ForegroundColor Cyan
-        Write-Host "확인: 모든 URL을 직접 열고, 연결 페이지 안에 네이버폼·구글폼·모아폼 유도 링크나 QR코드가 없는지 확인하세요." -ForegroundColor Cyan
+        Write-Host "============================================================" -ForegroundColor Cyan
+        Write-Host "[검수 필수] 3단계 HTML 결과" -ForegroundColor Cyan
+        Write-Host "============================================================" -ForegroundColor Cyan
+        Write-Host "[ ] 두 HTML의 해외시장뉴스·사업안내·아카데미·배너 등 모든 텍스트와 링크가 일치하는지 확인"
+        Write-Host "[ ] 모든 URL을 열어 네이버폼·구글폼·모아폼 유도 링크나 QR코드가 없는지 확인"
       } else {
         Write-Host "Step 3 finished with an error. Check the messages above." -ForegroundColor Yellow
       }
