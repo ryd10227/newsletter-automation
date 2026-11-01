@@ -1,0 +1,107 @@
+﻿뉴스레터 자동화 사용방법
+========================
+
+문서의 [발행일8자리]은 실제 발행일 8자리를 뜻합니다.
+예: 2026년 11월 3일 → 20261103
+
+
+1. 입력 파일 준비
+-----------------
+
+newsletter-automation\
+├─ run.cmd
+└─ work_history\
+   └─ [발행일8자리]\
+      └─ input\
+         ├─ newsletter_DB_[발행일8자리].xlsm 또는 .xlsx
+         └─ [발행일8자리]_letter\
+            ├─ newsletter_[발행일8자리].psd
+            └─ newsletter_[발행일8자리].html
+
+발행일이 2026년 11월 3일이면 모든 날짜를 20261103으로 맞춥니다.
+Excel 파일은 .xlsm 또는 .xlsx 중 하나만 넣습니다.
+
+
+2. 실행 순서 요약
+-----------------
+
+입력 파일 준비
+→ run.cmd 더블클릭
+→ 발행일 8자리 입력
+→ 1 입력
+→ 2 입력
+→ 3 입력
+→ 4 입력
+→ 0 입력하여 종료
+
+
+3. 실행
+-------
+
+run.cmd를 더블클릭하고 발행일 8자리를 입력합니다.
+
+예시
+20261103
+
+
+4. 번호별 진행
+--------------
+
+1 입력 — Excel → CSV
+
+자동 생성:
+
+output\
+├─ newsletter.csv
+└─ images\
+   ├─ banner_01.png
+   └─ banner_03.png
+
+
+2 입력 — Photoshop 전체 자동화
+
+사용자가 Photoshop에서 따로 클릭할 것은 없습니다.
+
+자동으로 진행되는 작업:
+- Photoshop 실행
+- 원본 PSD 열기 또는 기존 문서 재사용
+- PSD 위치에서 newsletter.csv 자동 탐색
+- fill.jsx 실행
+- 텍스트와 배너 입력
+- 결과 PSD 및 PNG 저장
+
+생성 결과:
+
+output\
+├─ newsletter_[발행일8자리].psd
+└─ images\
+   ├─ bg.png
+   ├─ banner_02.png
+   ├─ 우측배너.png
+   └─ newsletter_[발행일8자리].png
+
+오류나 경고가 있을 때만 다음 파일이 생성됩니다.
+
+output\photoshop_automation_error.log
+
+
+3 입력 — HTML 2개 생성
+
+자동 생성:
+
+output\
+├─ vdi_[발행일8자리].html
+└─ mutu24_[발행일8자리].html
+
+
+4 입력 — 반입 ZIP 생성
+
+자동 생성:
+
+output\[발행일8자리]_반입.zip
+
+
+5. 종료
+-------
+
+작업이 끝나면 0을 입력해 창을 종료합니다.
