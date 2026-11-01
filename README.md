@@ -11,9 +11,25 @@ Excel에 정리한 뉴스레터 데이터를 CSV, Photoshop PSD/PNG, VDI HTML, �
 - `4_create_zip`: 최종 반입 ZIP 생성
 - `_common`: Windows 실행 메뉴
 
+## 시작 전 필수 준비
+
+`run.cmd`를 실행하기 전에 아래 폴더와 파일을 반드시 준비하세요.
+
+```text
+work_history\
+└─ [발행일8자리]\
+   └─ input\
+      ├─ newsletter_DB_[발행일8자리].xlsm 또는 .xlsx
+      └─ [발행일8자리]_letter\
+         ├─ newsletter_[발행일8자리].psd
+         └─ newsletter_[발행일8자리].html
+```
+
+날짜 폴더, Excel, letter 폴더, PSD, HTML의 `[발행일8자리]`가 전부 같아야 합니다. Excel 파일은 `.xlsm` 또는 `.xlsx` 중 하나만 넣으세요.
+
 ## 빠른 실행
 
-1. `work_history\YYYYMMDD\input`에 해당 날짜의 Excel과 뉴스레터 원본 폴더를 넣습니다.
+1. 위의 필수 폴더 구조를 준비합니다.
 2. `run.cmd`를 실행하고 발행일 8자리를 입력합니다.
 3. 메뉴에서 `1`을 입력해 CSV를 생성합니다.
 4. 메뉴의 `2` 안내에 따라 Photoshop에서 `2_photoshop\fill.jsx`를 실행합니다.
