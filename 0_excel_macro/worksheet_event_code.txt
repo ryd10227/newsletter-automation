@@ -1,0 +1,54 @@
+﻿Option Explicit
+
+' 아래 코드를 다음 네 시트의 코드 창에 각각 똑같이 붙여넣으세요.
+' DB-사업안내형 / DB-아카데미 / DB-배너형 / DB-알림톡
+Private Sub Worksheet_Activate()
+    If TypeName(Selection) = "Range" Then
+        NewsletterParser.UpdatePasteShortcut Me, Selection
+    End If
+End Sub
+
+Private Sub Worksheet_Deactivate()
+    NewsletterParser.RemovePasteShortcut
+End Sub
+
+Private Sub Worksheet_SelectionChange(ByVal Target As Range)
+    NewsletterParser.UpdatePasteShortcut Me, Target
+End Sub
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Dim oldEvents As Boolean
+    Dim rawText As String
+    Dim targetRow As Long
+    Dim pastedCell As Range
+
+    If Target.Row < 4 Then Exit Sub
+
+    ' DB 값을 지우거나 직접 수정하면 최종·달력에도 즉시 반영합니다.
+    If Target.Columns.Count <> 1 Or Target.Column <> 2 Then
+        NewsletterParser.전체_새로고침
+        Exit Sub
+    End If
+
+    For Each pastedCell In Target.Cells
+        If rawText <> "" Then rawText = rawText & vbLf
+        rawText = rawText & CStr(pastedCell.Value2)
+    Next pastedCell
+    If Not NewsletterParser.LooksLikeRawText(rawText) Then
+        NewsletterParser.전체_새로고침
+        Exit Sub
+    End If
+    targetRow = Target.Cells(1, 1).Row
+
+    On Error GoTo Failed
+    oldEvents = Application.EnableEvents
+    Application.EnableEvents = False
+    Application.Undo
+    NewsletterParser.RegisterRawTextAtRow Me, rawText, targetRow
+    Application.EnableEvents = oldEvents
+    Exit Sub
+
+Failed:
+    Application.EnableEvents = oldEvents
+    MsgBox "등록하지 못했습니다." & vbCrLf & vbCrLf & Err.Description, vbExclamation
+End Sub

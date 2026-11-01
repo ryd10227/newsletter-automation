@@ -1,0 +1,305 @@
+<!-- nlWrap -->
+<div class="nlWrap">
+    <!-- nlHeader -->
+    <div class="nlHeader">
+        <div class="top">
+            <div class="lt">
+                <h1>kotra 뉴스레터</h1>
+                <p>nnnn년 n월 nn일</p>
+            </div>
+            <div class="rt">
+                <ul>
+                    <li><a href="https://www.youtube.com/globalkotra" class="snsYoutube">유튜브 바로가기</a></li>
+                    <li><a href="https://www.instagram.com/globalkotra" class="snsInstagram">인스타그램 바로가기</a></li>
+                    <li><a href="https://blog.naver.com/kimglobal" class="snsBlog">네이버 블로그 바로가기</a></li>
+                    <li><a href="http://pf.kakao.com/_xlKpyxb" class="snsKaKao">카카오 채널 바로가기</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="bottom">
+            <p>KOTRA 카카오톡 채널에서 뉴스레터를 만나보세요</p>
+            <strong>KOTRA(대한무역투자진흥공사)</strong>
+        </div>
+    </div>
+    <!--// nlHeader -->
+    <!-- nlContents -->
+    <div class="nlContents">
+        <div class="nlCont">
+            <h2>KOTRA 해외시장뉴스</h2>
+
+  <!--// 상단 해외시장뉴스 이미지 영역 / 파일업로드 후 경로 복사하고 ALT 글자 수정-->
+            <a href="" class="titleNews"><img src="" alt=""></a>
+  <!--// 상단 해외시장뉴스 이미지 영역 / 파일업로드 후 경로 복사하고 ALT 글자 수정-->
+
+
+            <div class="newsBoxes">
+                <a href="" class="newsBox">
+                    <div class="local">
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <p></p>
+                </a>
+                <a href="" class="newsBox">
+                    <div class="local">
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <p></p>
+                </a>
+                <a href="" class="newsBox">
+                    <div class="local">
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <p></p>
+                </a>
+                <a href="" class="newsBox">
+                    <div class="local">
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <p></p>
+                </a>
+                <a href="" class="newsBox">
+                    <div class="local">
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <p></p>
+                </a>
+                <a href="" class="newsBox">
+                    <div class="local">
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <p></p>
+                </a>
+            </div>
+        </div>
+        <div class="nlCont">
+            <h2>KOTRA 사업안내</h2>
+            <div class="projectBoxes">
+                <a href="" class="projectBox">
+                    <ul>
+                        <li class="period">
+                            <span>사업기간</span>
+                            <p></p>
+                        </li>
+                        <li class="deadline">
+                            <span>신청마감</span>
+                            <p></p>
+                        </li>
+                    </ul>
+                    <p></p>
+                </a>
+                <a href="" class="projectBox">
+                    <ul>
+                        <li class="period">
+                            <span>사업기간</span>
+                            <p></p>
+                        </li>
+                        <li class="deadline">
+                            <span>신청마감</span>
+                            <p></p>
+                        </li>
+                    </ul>
+                    <p></p>
+                </a>
+                <a href="" class="projectBox">
+                    <ul>
+                        <li class="period">
+                            <span>사업기간</span>
+                            <p></p>
+                        </li>
+                        <li class="deadline">
+                            <span>신청마감</span>
+                            <p></p>
+                        </li>
+                    </ul>
+                    <p></p>
+                </a>
+                <a href="" class="projectBox">
+                    <ul>
+                        <li class="period">
+                            <span>사업기간</span>
+                            <p></p>
+                        </li>
+                        <li class="deadline">
+                            <span>신청마감</span>
+                            <p></p>
+                        </li>
+                    </ul>
+                    <p></p>
+                </a>
+                <a href="" class="projectBox">
+                    <ul>
+                        <li class="period">
+                            <span>사업기간</span>
+                            <p></p>
+                        </li>
+                        <li class="deadline">
+                            <span>신청마감</span>
+                            <p></p>
+                        </li>
+                    </ul>
+                    <p></p>
+                </a>
+                <a href="" class="projectBox">
+                    <ul>
+                        <li class="period">
+                            <span>사업기간</span>
+                            <p></p>
+                        </li>
+                        <li class="deadline">
+                            <span>신청마감</span>
+                            <p></p>
+                        </li>
+                    </ul>
+                    <p></p>
+                </a>
+                <a href="" class="projectBox">
+                    <ul>
+                        <li class="period">
+                            <span>사업기간</span>
+                            <p></p>
+                        </li>
+                        <li class="deadline">
+                            <span>신청마감</span>
+                            <p></p>
+                        </li>
+                    </ul>
+                    <p></p>
+                </a>
+                <a href="" class="projectBox">
+                    <ul>
+                        <li class="period">
+                            <span>사업기간</span>
+                            <p></p>
+                        </li>
+                        <li class="deadline">
+                            <span>신청마감</span>
+                            <p></p>
+                        </li>
+                    </ul>
+                    <p></p> 
+                </a>
+            </div>
+        </div>
+
+
+        <div class="nlCont">
+            <h2>아카데미 교육·연수 과정</h2>
+            <div class="projectBoxes">
+                <a href="" class="projectBox">
+                    <ul>
+                        <li class="period">
+                            <span>교육기간</span>
+                            <p></p>
+                        </li>
+                        <li class="deadline">
+                            <span>신청마감</span>
+                            <p></p>
+                        </li>
+                    </ul>
+                    <p></p>
+                </a>
+                <a href="" class="projectBox">
+                    <ul>
+                        <li class="period">
+                            <span>교육기간</span>
+                            <p></p>
+                        </li>
+                        <li class="deadline">
+                            <span>신청마감</span>
+                            <p></p>
+                        </li>
+                    </ul>
+                    <p></p>
+                </a>
+                <a href="" class="projectBox">
+                    <ul>
+                        <li class="period">
+                            <span>교육기간</span>
+                            <p></p>
+                        </li>
+                        <li class="deadline">
+                            <span>신청마감</span>
+                            <p></p>
+                        </li>
+                    </ul>
+                    <p></p>
+                </a>
+                <a href="" class="projectBox">
+                    <ul>
+                        <li class="period">
+                            <span>교육기간</span>
+                            <p></p>
+                        </li>
+                        <li class="deadline">
+                            <span>신청마감</span>
+                            <p></p>
+                        </li>
+                    </ul>
+                    <p></p>
+                </a>
+            </div>
+        </div>
+
+        <div class="bannerCont">
+  <!--// 하단 배너 3개 이미지 영역  / 파일업로드 후 경로 복사하고 ALT 글자 수정-->
+            <a href=""><img src="" alt=""></a>
+            <a href=""><img src="" alt=""></a>
+            <a href=""><img src="" alt=""></a>
+  <!--// 하단 배너 3개 이미지 영역  / 파일업로드 후 경로 복사하고 ALT 글자 수정-->
+        </div>
+
+        <div class="nlCont inR">
+            <div class="lt">
+                <h2>경제외교 소식</h2>
+                <div class="exampleBoxes">
+                    <a href="" class="exampleBox">
+                        <span></span>
+                        <p></p>
+                    </a>
+                    <a href="" class="exampleBox">
+                        <span></span>
+                        <p></p>
+                    </a>
+                </div>
+            </div>
+
+<a href="" class="rt exampleImg">
+  <!--// 하단 경제외교 소식 이미지 영역 / 파일업로드 후 경로 복사하고 ALT 글자 수정-->
+               <img src="" alt="">
+  <!--// 하단 경제외교 소식 이미지 영역 / 파일업로드 후 경로 복사하고 ALT 글자 수정-->
+            </a>
+
+    </div>
+    <!--// nlContents -->
+    <!-- nlFooter -->
+    <div class="nlFooter">
+        <div class="lt">
+            <p class="logo">kotra 대한무역투자진흥공사</p>
+            <div class="info">
+                <p>
+                    본 뉴스레터(발신전용)는 KOTRA 회원가입 시 [개인정보 마케팅 활용]에 동의하신 분께만 발송됩니다. <br>
+                    KOTRA 뉴스레터를 받지 않으시려면 MY KOTRA [회원정보 수정]에서 동의여부를 변경하시기 바랍니다.
+                </p>
+                <ul>
+                    <li>주소 : 서울시 서초구 헌릉로 13 </li>
+                    <li>고객안내센터 : 1600-7119</li>
+                </ul>
+            </div>
+        </div>
+        <div class="link">
+            <div class="tp">
+                <a href="https://www.kotra.or.kr/cmm/mber/sbscrb/selectSbscrbUsrTy.do">신규가입</a>
+                <a href="https://www.kotra.or.kr/membership/mberEmailRecive.api?type=">수신거부</a>
+            </div>
+            <a href="https://www.kotra.or.kr/subList/20000005831?tabid=51" class="btnKotra"><img src="https://www.kotra.or.kr:443/kp/module/upload/image/selectImageDetail.do?usrimgId=243001" alt="실천하는 윤리경영 신뢰받는 KOTRA"></a>
+        </div>
+    </div>
+    <!--// nlFooter -->
+</div>
+<!--// nlWrap --></div>

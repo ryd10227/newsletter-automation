@@ -1,0 +1,46 @@
+﻿Option Explicit
+
+' VBA 편집기에서 "Microsoft Excel Objects > 최종 업로드"를 열고
+' 이 코드를 시트 코드 창에 붙여넣으세요.
+Private Sub Worksheet_Activate()
+    If TypeName(Selection) = "Range" Then
+        NewsletterParser.UpdatePasteShortcut Me, Selection
+    End If
+End Sub
+
+Private Sub Worksheet_Deactivate()
+    NewsletterParser.RemovePasteShortcut
+End Sub
+
+Private Sub Worksheet_SelectionChange(ByVal Target As Range)
+    NewsletterParser.UpdatePasteShortcut Me, Target
+End Sub
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Dim oldEvents As Boolean
+    Dim rawText As String
+    Dim targetRow As Long
+    Dim pastedCell As Range
+
+    If Target.Columns.Count <> 1 Then Exit Sub
+    If Target.Column <> 2 Then Exit Sub
+
+    For Each pastedCell In Target.Cells
+        If rawText <> "" Then rawText = rawText & vbLf
+        rawText = rawText & CStr(pastedCell.Value2)
+    Next pastedCell
+    If Not NewsletterParser.LooksLikeRawText(rawText) Then Exit Sub
+    targetRow = Target.Cells(1, 1).Row
+
+    On Error GoTo Failed
+    oldEvents = Application.EnableEvents
+    Application.EnableEvents = False
+    Application.Undo
+    NewsletterParser.RegisterRawTextAtRow Me, rawText, targetRow
+    Application.EnableEvents = oldEvents
+    Exit Sub
+
+Failed:
+    Application.EnableEvents = oldEvents
+    MsgBox "등록하지 못했습니다." & vbCrLf & vbCrLf & Err.Description, vbExclamation
+End Sub
