@@ -32,7 +32,7 @@ work_history\
 1. 위의 필수 폴더 구조를 준비합니다.
 2. `run.cmd`를 실행하고 발행일 8자리를 입력합니다.
 3. 메뉴에서 `1`을 입력해 CSV를 생성합니다.
-4. 메뉴의 `2` 안내에 따라 Photoshop에서 `2_photoshop\fill.jsx`를 실행합니다.
+4. 메뉴에서 `2`를 입력해 원본 PSD를 Photoshop으로 열고 `2_photoshop\fill.jsx`를 실행합니다.
 5. 메뉴에서 `3`을 입력해 VDI HTML과 무투24 HTML을 생성합니다.
 6. 메뉴에서 `4`를 입력해 반입 ZIP을 생성합니다.
 

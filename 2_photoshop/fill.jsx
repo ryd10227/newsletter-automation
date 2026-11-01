@@ -730,6 +730,24 @@
         throw new Error("타이틀 그룹에서 발행일 텍스트 레이어를 찾지 못했습니다.");
     }
 
+    function normalizedFilePath(value) {
+        return String(value || "").replace(/\\/g, "/").toLowerCase();
+    }
+
+    function openOrReuseDocument(file) {
+        var targetPath = normalizedFilePath(file.fsName);
+        var i;
+        for (i = 0; i < app.documents.length; i++) {
+            try {
+                if (normalizedFilePath(app.documents[i].fullName.fsName) === targetPath) {
+                    app.activeDocument = app.documents[i];
+                    return app.documents[i];
+                }
+            } catch (ignore) {}
+        }
+        return app.open(file);
+    }
+
     var document = null;
     var initialGroupTree = "";
     var warnings = [];
@@ -753,7 +771,7 @@
             warnings.push("CSV에 데이터 행이 없어 원본 PSD 내용을 유지합니다.");
         }
 
-        document = app.open(templateFile);
+        document = openOrReuseDocument(templateFile);
         initialGroupTree = groupTree(document, "", 0);
         var business = recordsBySection(records, "business");
         var academy = recordsBySection(records, "academy");

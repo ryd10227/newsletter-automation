@@ -78,6 +78,46 @@ $VdiOutput = Join-Path $OutputDir "vdi_${Issue8}.html"
 $MutuOutput = Join-Path $OutputDir "mutu24_${Issue8}.html"
 $MutuTemplate = Join-Path $Root "3_html\mutu24_template.txt"
 
+function Find-PhotoshopExecutable {
+  $RegistryPaths = @(
+    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Photoshop.exe",
+    "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Photoshop.exe",
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\Photoshop.exe"
+  )
+
+  foreach ($RegistryPath in $RegistryPaths) {
+    $RegistryEntry = Get-ItemProperty -LiteralPath $RegistryPath -ErrorAction SilentlyContinue
+    if ($null -ne $RegistryEntry) {
+      $RegistryExecutable = $RegistryEntry.'(default)'
+      if ($RegistryExecutable -and (Test-Path -LiteralPath $RegistryExecutable -PathType Leaf)) {
+        return $RegistryExecutable
+      }
+    }
+  }
+
+  $PhotoshopCommand = Get-Command "Photoshop.exe" -ErrorAction SilentlyContinue
+  if ($null -ne $PhotoshopCommand -and $PhotoshopCommand.Source) {
+    return $PhotoshopCommand.Source
+  }
+
+  $AdobeRoot = Join-Path $env:ProgramFiles "Adobe"
+  if (Test-Path -LiteralPath $AdobeRoot -PathType Container) {
+    $PhotoshopFolders = @(
+      Get-ChildItem -LiteralPath $AdobeRoot -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -like "Adobe Photoshop*" } |
+        Sort-Object Name -Descending
+    )
+    foreach ($PhotoshopFolder in $PhotoshopFolders) {
+      $PhotoshopExecutable = Join-Path $PhotoshopFolder.FullName "Photoshop.exe"
+      if (Test-Path -LiteralPath $PhotoshopExecutable -PathType Leaf) {
+        return $PhotoshopExecutable
+      }
+    }
+  }
+
+  return $null
+}
+
 Write-Host "Ready: $Issue8"
 Write-Host "Input:  $InputDir"
 Write-Host "Output: $OutputDir"
@@ -88,7 +128,7 @@ function Show-NewsletterMenu {
   Write-Host "  Newsletter automation: $Issue8"
   Write-Host "========================================"
   Write-Host "  1  Excel -> CSV"
-  Write-Host "  2  Photoshop instructions (manual)"
+  Write-Host "  2  Open source PSD in Photoshop"
   Write-Host "  3  VDI HTML + Mutu24 HTML"
   Write-Host "  4  Create transfer ZIP"
   Write-Host "  0  Exit"
@@ -116,11 +156,23 @@ while ($true) {
 
     "2" {
       Write-Host ""
-      Write-Host "Run Photoshop manually with these files:"
+      $PhotoshopExecutable = Find-PhotoshopExecutable
+      try {
+        if ($PhotoshopExecutable) {
+          Start-Process -FilePath $PhotoshopExecutable -ArgumentList ('"{0}"' -f $Psd)
+          Write-Host "Opened PSD in Photoshop: $Psd" -ForegroundColor Green
+        } else {
+          Start-Process -FilePath $Psd
+          Write-Host "Photoshop path was not found. Opened the PSD with its Windows default app." -ForegroundColor Yellow
+        }
+      } catch {
+        Write-Host "Could not open the PSD automatically: $($_.Exception.Message)" -ForegroundColor Yellow
+      }
+
       Write-Host "Script: $Root\2_photoshop\fill.jsx"
       Write-Host "CSV:    $Csv"
       Write-Host "PSD:    $Psd"
-      Write-Host "After Photoshop finishes, return here and enter 3."
+      Write-Host "In Photoshop, run fill.jsx. After it finishes, return here and enter 3."
     }
 
     "3" {
