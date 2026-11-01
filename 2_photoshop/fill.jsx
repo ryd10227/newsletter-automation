@@ -748,10 +748,62 @@
         return app.open(file);
     }
 
+    function automationConfigFromTemplate(templateFile) {
+        if (!templateFile || !templateFile.exists) {
+            return null;
+        }
+        var dateMatch = /^newsletter_(20\d{6})\.psd$/i.exec(templateFile.name);
+        if (!dateMatch) {
+            return null;
+        }
+
+        var issueDate = dateMatch[1];
+        var letterFolder = templateFile.parent;
+        var inputFolder = letterFolder.parent;
+        var workFolder = inputFolder.parent;
+        if (
+            normalizeGroupName(letterFolder.name) !== normalizeGroupName(issueDate + "_letter") ||
+            normalizeGroupName(inputFolder.name) !== "input" ||
+            workFolder.name !== issueDate
+        ) {
+            return null;
+        }
+
+        var outputFolder = new Folder(workFolder.fsName + "/output");
+        var imageFolder = new Folder(outputFolder.fsName + "/images");
+        return {
+            csv: outputFolder.fsName + "/newsletter.csv",
+            template: templateFile.fsName,
+            output: outputFolder.fsName + "/newsletter_" + issueDate + ".psd",
+            exportsDir: imageFolder.fsName,
+            webPng: imageFolder.fsName + "/newsletter_" + issueDate + ".png",
+            log: outputFolder.fsName + "/photoshop_automation_error.log"
+        };
+    }
+
+    function templateFromCurrentContext() {
+        if (typeof NEWSLETTER_TEMPLATE_PATH !== "undefined" && trim(NEWSLETTER_TEMPLATE_PATH)) {
+            return new File(NEWSLETTER_TEMPLATE_PATH);
+        }
+        if (app.documents.length > 0) {
+            try {
+                return new File(app.activeDocument.fullName.fsName);
+            } catch (ignore) {}
+        }
+        return null;
+    }
+
     var document = null;
     var initialGroupTree = "";
     var warnings = [];
     try {
+        var templateFile = autoConfig ? new File(autoConfig.template) : templateFromCurrentContext();
+        if (!autoConfig && templateFile) {
+            autoConfig = automationConfigFromTemplate(templateFile);
+            if (autoConfig) {
+                app.displayDialogs = DialogModes.NO;
+            }
+        }
         var csvFile = autoConfig ? new File(autoConfig.csv) : File.openDialog("1_excel_to_csv/export.py가 만든 newsletter.csv를 선택하세요", "CSV:*.csv");
         if (!csvFile) {
             return;
@@ -759,7 +811,9 @@
         if (!csvFile.exists) {
             throw new Error("CSV를 찾을 수 없습니다: " + csvFile.fsName);
         }
-        var templateFile = autoConfig ? new File(autoConfig.template) : File.openDialog("원본 뉴스레터 PSD를 선택하세요", "Photoshop:*.psd");
+        if (!templateFile) {
+            templateFile = File.openDialog("원본 뉴스레터 PSD를 선택하세요", "Photoshop:*.psd");
+        }
         if (!templateFile) {
             return;
         }

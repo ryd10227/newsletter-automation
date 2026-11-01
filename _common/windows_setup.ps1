@@ -100,14 +100,7 @@ function Invoke-PhotoshopAutomation {
 
   $RunnerLines = @(
     "#target photoshop",
-    "var NEWSLETTER_AUTOMATION_CONFIG = {",
-    ('    csv: "{0}",' -f (ConvertTo-JsPath $Csv)),
-    ('    template: "{0}",' -f (ConvertTo-JsPath $Psd)),
-    ('    output: "{0}",' -f (ConvertTo-JsPath $ResultPsd)),
-    ('    exportsDir: "{0}",' -f (ConvertTo-JsPath $ImagesDir)),
-    ('    webPng: "{0}",' -f (ConvertTo-JsPath $WebPng)),
-    ('    log: "{0}"' -f (ConvertTo-JsPath $PhotoshopLog)),
-    "};",
+    ('var NEWSLETTER_TEMPLATE_PATH = "{0}";' -f (ConvertTo-JsPath $Psd)),
     ('$' + '.evalFile(new File("{0}"));' -f (ConvertTo-JsPath $PhotoshopScript))
   )
 
