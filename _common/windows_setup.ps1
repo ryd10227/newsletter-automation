@@ -76,7 +76,7 @@ $Csv = Join-Path $OutputDir "newsletter.csv"
 $ResultPsd = Join-Path $OutputDir "newsletter_${Issue8}.psd"
 $VdiOutput = Join-Path $OutputDir "vdi_${Issue8}.html"
 $MutuOutput = Join-Path $OutputDir "mutu24_${Issue8}.html"
-$MutuTemplate = Join-Path $Root "4_mutu24_html\mutu24_template.txt"
+$MutuTemplate = Join-Path $Root "3_html\mutu24_template.txt"
 
 Write-Host "Ready: $Issue8"
 Write-Host "Input:  $InputDir"
@@ -124,14 +124,14 @@ while ($true) {
     }
 
     "3" {
-      & py "$Root\3_vdi_html\fill.py" `
+      & py "$Root\3_html\vdi.py" `
         --csv "$Csv" `
         --html "$SourceHtml" `
         --output "$VdiOutput" `
         --best-effort
       $VdiExitCode = $LASTEXITCODE
 
-      & py "$Root\4_mutu24_html\fill.py" `
+      & py "$Root\3_html\mutu24.py" `
         --template "$MutuTemplate" `
         --csv "$Csv" `
         --psd "$ResultPsd" `
@@ -150,7 +150,7 @@ while ($true) {
     }
 
     "4" {
-      & py "$Root\5_create_zip\create.py" --output-dir "$OutputDir"
+      & py "$Root\4_create_zip\create.py" --output-dir "$OutputDir"
 
       if ($LASTEXITCODE -ne 0) {
         Write-Host "Step 4 finished with an error. Check the messages above." -ForegroundColor Yellow

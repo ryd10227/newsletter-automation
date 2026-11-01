@@ -81,8 +81,8 @@ PowerShell 창에 1을 입력하고 Enter를 누릅니다.
 
 3. VDI HTML + 무투24 HTML
 -------------------------
-사용 파일: 3_vdi_html\fill.py, 4_mutu24_html\fill.py
-고정 템플릿: 4_mutu24_html\mutu24_template.txt
+사용 파일: 3_html\vdi.py, 3_html\mutu24.py
+고정 템플릿: 3_html\mutu24_template.txt
 
 입력
 - output\newsletter.csv                                ← 1단계에서 생성
@@ -101,7 +101,7 @@ PowerShell 창에 3을 입력하고 Enter를 누릅니다.
 
 4. 반입 ZIP 생성
 ----------------
-사용 파일: 5_create_zip\create.py
+사용 파일: 4_create_zip\create.py
 
 입력
 - output\images 안의 이미지 6개              ← 관리자페이지 업로드용 이미지

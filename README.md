@@ -7,9 +7,8 @@ Excel에 정리한 뉴스레터 데이터를 CSV, Photoshop PSD/PNG, VDI HTML, �
 - `0_excel_macro`: 뉴스레터 DB 입력·파싱용 Excel 템플릿과 VBA
 - `1_excel_to_csv`: Excel 최종 시트를 CSV와 배너 이미지로 추출
 - `2_photoshop`: CSV를 PSD에 반영하고 PSD/PNG를 저장하는 Photoshop JSX
-- `3_vdi_html`: VDI 뉴스레터 HTML 링크 입력
-- `4_mutu24_html`: 무투24 HTML 생성
-- `5_create_zip`: 최종 반입 ZIP 생성
+- `3_html`: VDI 뉴스레터 HTML과 무투24 HTML 생성
+- `4_create_zip`: 최종 반입 ZIP 생성
 - `_common`: Windows 실행 메뉴
 
 ## 빠른 실행
