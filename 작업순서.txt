@@ -69,15 +69,10 @@ PowerShell 창에 1을 입력하고 Enter를 누릅니다.
 - output\images\newsletter_[발행일8자리].png        ← 전체 뉴스레터 최종 이미지
 
 실행 방법
-1) PowerShell 창에 2를 입력하면 원본 PSD가 Photoshop으로 자동으로 열립니다.
-2) Photoshop 위쪽 메뉴에서 파일 → 스크립트 → 찾아보기를 누릅니다.
-3) newsletter-automation\2_photoshop 폴더를 엽니다.
-4) fill.jsx를 선택합니다.
-5) 파일 선택창이 나오면 output\newsletter.csv를 선택합니다.
-6) 다음 파일 선택창에서 이미 열려 있는 input\[발행일8자리]_letter\newsletter_[발행일8자리].psd를 선택합니다.
-7) 스크립트는 이미 열린 PSD를 재사용하므로 같은 파일을 중복으로 열지 않습니다.
-8) 스크립트가 결과 PSD와 이미지들을 output 폴더에 자동 저장합니다.
-9) 완료 안내가 나오면 결과를 확인하고 PowerShell 창으로 돌아갑니다.
+1) PowerShell 창에 2를 입력하고 Enter를 누릅니다.
+2) Photoshop 실행, fill.jsx 실행, CSV·PSD 입력, 결과 저장까지 자동으로 진행됩니다.
+3) 파일 선택창이 나오지 않으며 PowerShell에 완료 결과가 표시될 때까지 기다립니다.
+4) 오류가 발생한 경우에만 output\photoshop_automation_error.log가 생성됩니다.
 
 3. VDI HTML + 무투24 HTML
 -------------------------

@@ -77,6 +77,75 @@ $ResultPsd = Join-Path $OutputDir "newsletter_${Issue8}.psd"
 $VdiOutput = Join-Path $OutputDir "vdi_${Issue8}.html"
 $MutuOutput = Join-Path $OutputDir "mutu24_${Issue8}.html"
 $MutuTemplate = Join-Path $Root "3_html\mutu24_template.txt"
+$PhotoshopScript = Join-Path $Root "2_photoshop\fill.jsx"
+$PhotoshopRunner = Join-Path $OutputDir "_run_photoshop_newsletter.jsx"
+$PhotoshopLog = Join-Path $OutputDir "photoshop_automation_error.log"
+$WebPng = Join-Path $ImagesDir "newsletter_${Issue8}.png"
+
+function ConvertTo-JsPath {
+  param([string]$Value)
+  return $Value.Replace('\', '/').Replace('"', '\"')
+}
+
+function Invoke-PhotoshopAutomation {
+  if (-not (Test-Path -LiteralPath $Csv -PathType Leaf)) {
+    Write-Host "Missing CSV. Enter 1 before entering 2." -ForegroundColor Yellow
+    return
+  }
+
+  if (-not (Test-Path -LiteralPath $PhotoshopScript -PathType Leaf)) {
+    Write-Host "Missing Photoshop script: $PhotoshopScript" -ForegroundColor Yellow
+    return
+  }
+
+  $RunnerLines = @(
+    "#target photoshop",
+    "var NEWSLETTER_AUTOMATION_CONFIG = {",
+    ('    csv: "{0}",' -f (ConvertTo-JsPath $Csv)),
+    ('    template: "{0}",' -f (ConvertTo-JsPath $Psd)),
+    ('    output: "{0}",' -f (ConvertTo-JsPath $ResultPsd)),
+    ('    exportsDir: "{0}",' -f (ConvertTo-JsPath $ImagesDir)),
+    ('    webPng: "{0}",' -f (ConvertTo-JsPath $WebPng)),
+    ('    log: "{0}"' -f (ConvertTo-JsPath $PhotoshopLog)),
+    "};",
+    ('$' + '.evalFile(new File("{0}"));' -f (ConvertTo-JsPath $PhotoshopScript))
+  )
+
+  Remove-Item -LiteralPath $PhotoshopLog -Force -ErrorAction SilentlyContinue
+  Set-Content -LiteralPath $PhotoshopRunner -Value $RunnerLines -Encoding Default
+
+  try {
+    Write-Host "Starting Photoshop automation. Please wait..."
+    $PhotoshopApplication = New-Object -ComObject "Photoshop.Application"
+    $PhotoshopApplication.Visible = $true
+    $PhotoshopApplication.DoJavaScriptFile($PhotoshopRunner)
+
+    if (Test-Path -LiteralPath $PhotoshopLog -PathType Leaf) {
+      $PhotoshopStatus = Get-Content -LiteralPath $PhotoshopLog -TotalCount 1
+      if ($PhotoshopStatus -eq "SUCCESS") {
+        Remove-Item -LiteralPath $PhotoshopLog -Force -ErrorAction SilentlyContinue
+        Write-Host "Created: $ResultPsd" -ForegroundColor Green
+        Write-Host "Created: $WebPng" -ForegroundColor Green
+      } else {
+        Write-Host "Photoshop finished with warnings or errors: $PhotoshopLog" -ForegroundColor Yellow
+      }
+    } else {
+      Write-Host "Photoshop finished, but no status log was returned. Check the output folder." -ForegroundColor Yellow
+    }
+  } catch {
+    $PhotoshopError = "FAILED`r`n" + $_.Exception.Message
+    Set-Content -LiteralPath $PhotoshopLog -Value $PhotoshopError -Encoding UTF8
+    Write-Host "Photoshop automation failed: $PhotoshopLog" -ForegroundColor Yellow
+
+    $PhotoshopExecutable = Find-PhotoshopExecutable
+    if ($PhotoshopExecutable) {
+      Start-Process -FilePath $PhotoshopExecutable -ArgumentList ('"{0}"' -f $Psd)
+      Write-Host "The source PSD was opened for manual recovery." -ForegroundColor Yellow
+    }
+  } finally {
+    Remove-Item -LiteralPath $PhotoshopRunner -Force -ErrorAction SilentlyContinue
+  }
+}
 
 function Find-PhotoshopExecutable {
   $RegistryPaths = @(
@@ -128,7 +197,7 @@ function Show-NewsletterMenu {
   Write-Host "  Newsletter automation: $Issue8"
   Write-Host "========================================"
   Write-Host "  1  Excel -> CSV"
-  Write-Host "  2  Open source PSD in Photoshop"
+  Write-Host "  2  Run Photoshop automation"
   Write-Host "  3  VDI HTML + Mutu24 HTML"
   Write-Host "  4  Create transfer ZIP"
   Write-Host "  0  Exit"
@@ -156,23 +225,7 @@ while ($true) {
 
     "2" {
       Write-Host ""
-      $PhotoshopExecutable = Find-PhotoshopExecutable
-      try {
-        if ($PhotoshopExecutable) {
-          Start-Process -FilePath $PhotoshopExecutable -ArgumentList ('"{0}"' -f $Psd)
-          Write-Host "Opened PSD in Photoshop: $Psd" -ForegroundColor Green
-        } else {
-          Start-Process -FilePath $Psd
-          Write-Host "Photoshop path was not found. Opened the PSD with its Windows default app." -ForegroundColor Yellow
-        }
-      } catch {
-        Write-Host "Could not open the PSD automatically: $($_.Exception.Message)" -ForegroundColor Yellow
-      }
-
-      Write-Host "Script: $Root\2_photoshop\fill.jsx"
-      Write-Host "CSV:    $Csv"
-      Write-Host "PSD:    $Psd"
-      Write-Host "In Photoshop, run fill.jsx. After it finishes, return here and enter 3."
+      Invoke-PhotoshopAutomation
     }
 
     "3" {
