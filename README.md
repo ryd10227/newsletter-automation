@@ -1,0 +1,150 @@
+# 뉴스레터 자동화 사용방법
+
+Last Update 2026.11.01.  
+by 윤서연
+
+문서의 `[발행일8자리]`는 실제 발행일 8자리를 뜻합니다.  
+예: 2026년 11월 3일 → `20261103`
+
+## 1. 입력 파일 준비
+
+```text
+newsletter-automation\
+├─ run.cmd
+└─ work_history\
+   └─ [발행일8자리]\
+      └─ input\
+         ├─ newsletter_DB_[발행일8자리].xlsm 또는 .xlsx
+         └─ [발행일8자리]_letter\
+            ├─ newsletter_[발행일8자리].psd
+            └─ newsletter_[발행일8자리].html
+```
+
+발행일이 2026년 11월 3일이면 모든 날짜를 `20261103`으로 맞춥니다.  
+Excel 파일은 `.xlsm` 또는 `.xlsx` 중 하나만 넣습니다.
+
+## 2. 실행 순서 요약
+
+```text
+입력 파일 준비
+→ run.cmd 더블클릭
+→ 발행일 8자리 입력
+→ 1 입력
+→ 2 입력
+→ 3 입력
+→ 4 입력
+→ 0 입력하여 종료
+→ 생성된 output\[발행일8자리]_반입.zip 파일 반입
+```
+
+## 3. 실행
+
+`run.cmd`를 더블클릭하고 발행일 8자리를 입력합니다.
+
+```text
+20261103
+```
+
+## 4. 번호별 진행
+
+---
+
+### 1단계: `1` 입력 — Excel → CSV
+
+**사용자 작업**
+
+PowerShell 창에 `1`을 입력하고 Enter를 누릅니다.
+
+**자동 처리**
+
+Excel의 최종 데이터를 읽어 CSV와 배너 이미지를 추출합니다.
+
+**생성 파일**
+
+```text
+output\
+├─ newsletter.csv
+└─ images\
+   ├─ banner_01.png
+   └─ banner_03.png
+```
+
+---
+
+### 2단계: `2` 입력 — Photoshop 전체 자동화
+
+**사용자 작업**
+
+PowerShell 창에 `2`를 입력하고 작업이 끝날 때까지 기다립니다.
+
+**자동 처리**
+
+- Photoshop 실행
+- 원본 PSD 열기 또는 기존 문서 재사용
+- PSD 위치에서 `newsletter.csv` 자동 탐색
+- `fill.jsx` 실행
+- 텍스트와 배너 입력
+- 결과 PSD 및 PNG 저장
+
+**생성 파일**
+
+```text
+output\
+├─ newsletter_[발행일8자리].psd
+└─ images\
+   ├─ bg.png
+   ├─ banner_02.png
+   ├─ 우측배너.png
+   └─ newsletter_[발행일8자리].png
+```
+
+**참고**
+
+오류나 경고가 있을 때만 다음 파일이 생성됩니다.
+
+```text
+output\photoshop_automation_error.log
+```
+
+---
+
+### 3단계: `3` 입력 — HTML 2개 생성
+
+**사용자 작업**
+
+PowerShell 창에 `3`을 입력하고 Enter를 누릅니다.
+
+**자동 처리**
+
+VDI HTML과 무투24 HTML을 차례대로 생성합니다.
+
+**생성 파일**
+
+```text
+output\
+├─ vdi_[발행일8자리].html
+└─ mutu24_[발행일8자리].html
+```
+
+---
+
+### 4단계: `4` 입력 — 반입 ZIP 생성
+
+**사용자 작업**
+
+PowerShell 창에 `4`를 입력하고 Enter를 누릅니다.
+
+**자동 처리**
+
+관리자페이지 업로드 이미지와 HTML 2개를 반입용 ZIP으로 묶습니다.
+
+**생성 파일**
+
+```text
+output\[발행일8자리]_반입.zip
+```
+
+## 5. 종료
+
+작업이 끝나면 `0`을 입력해 창을 종료합니다.  
+생성된 `output\[발행일8자리]_반입.zip` 파일을 외부메일로 반입하여 사무실에서 작업을 이어갑니다.
