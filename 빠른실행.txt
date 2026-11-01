@@ -6,7 +6,7 @@
 
 0. 실행
 -------
-1) newsletter-automation 폴더의 run_newsletter.cmd를 더블클릭합니다.
+1) newsletter-automation 폴더의 run.cmd를 더블클릭합니다.
 2) 검은 창에 발행일 8자리를 입력하고 Enter를 누릅니다.
    예: 20261027
 
