@@ -81,10 +81,26 @@ $PhotoshopScript = Join-Path $Root "2_photoshop\fill.jsx"
 $PhotoshopRunner = Join-Path $OutputDir "_run_photoshop_newsletter.jsx"
 $PhotoshopLog = Join-Path $OutputDir "photoshop_automation_error.log"
 $WebPng = Join-Path $ImagesDir "newsletter_${Issue8}.png"
+$BgPng = Join-Path $ImagesDir "bg.png"
 
 function ConvertTo-JsPath {
   param([string]$Value)
   return $Value.Replace('\', '/').Replace('"', '\"')
+}
+
+function Open-ReviewFile {
+  param([string]$Path)
+
+  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+    Write-Host "Could not open missing review file: $Path" -ForegroundColor Yellow
+    return
+  }
+
+  try {
+    Start-Process -FilePath $Path
+  } catch {
+    Write-Host "Could not open review file automatically: $Path" -ForegroundColor Yellow
+  }
 }
 
 function Invoke-PhotoshopAutomation {
@@ -225,6 +241,8 @@ while ($true) {
         Write-Host "============================================================" -ForegroundColor Cyan
         Write-Host "[ ] output\images\newsletter_${Issue8}.png의 배너 1·3의 모서리가 둥근지 확인하세요."
         Write-Host "[ ] output\images\bg.png가 newsletter_${Issue8}.psd의 해외시장뉴스 영역의 배너와 일치하는지 확인하세요. 컬러배경·오브제·텍스트가 모두 포함된 이미지여야 합니다."
+        Open-ReviewFile -Path $WebPng
+        Open-ReviewFile -Path $BgPng
       }
     }
 
@@ -254,6 +272,8 @@ while ($true) {
         Write-Host "============================================================" -ForegroundColor Cyan
         Write-Host "[ ] output\vdi_${Issue8}.html과 output\mutu24_${Issue8}.html을 각각 열어 모든 요소가 올바른 URL로 연결되는지 확인하세요."
         Write-Host "[ ] 모든 URL을 직접 열고, 열린 페이지 안에 네이버폼·구글폼·모아폼 유도 링크나 QR코드가 없는지 확인하세요. 만약 있다면, 해당 글을 이번 뉴스레터에서 제거해야 합니다."
+        Open-ReviewFile -Path $VdiOutput
+        Open-ReviewFile -Path $MutuOutput
       } else {
         Write-Host "Step 3 finished with an error. Check the messages above." -ForegroundColor Yellow
       }
