@@ -223,9 +223,8 @@ while ($true) {
         Write-Host "============================================================" -ForegroundColor Cyan
         Write-Host "[검수 필수] 2단계 Photoshop 결과" -ForegroundColor Cyan
         Write-Host "============================================================" -ForegroundColor Cyan
-        Write-Host "[ ] 결과 PSD와 전체 PNG가 저장되었는지 확인"
-        Write-Host "[ ] 배너 1·3의 모서리가 둥글게 잘렸는지 확인"
-        Write-Host "[ ] images\bg.png에 해외시장뉴스 상단 배너의 배경·오브제·텍스트가 모두 포함됐는지 확인"
+        Write-Host "[ ] 배너 1·3의 모서리가 둥근지 확인하세요."
+        Write-Host "[ ] images\bg.png가 newsletter_${Issue8}.psd의 해외시장뉴스 영역의 배너와 일치하는지 확인하세요. 컬러배경·오브제·텍스트가 모두 포함된 이미지여야 합니다."
       }
     }
 
@@ -253,8 +252,8 @@ while ($true) {
         Write-Host "============================================================" -ForegroundColor Cyan
         Write-Host "[검수 필수] 3단계 HTML 결과" -ForegroundColor Cyan
         Write-Host "============================================================" -ForegroundColor Cyan
-        Write-Host "[ ] 두 HTML의 해외시장뉴스·사업안내·아카데미·배너 등 모든 텍스트와 링크가 일치하는지 확인"
-        Write-Host "[ ] 모든 URL을 열어 네이버폼·구글폼·모아폼 유도 링크나 QR코드가 없는지 확인"
+        Write-Host "[ ] 두 HTML을 각각 열어 모든 요소가 올바른 URL로 연결되는지 확인하세요."
+        Write-Host "[ ] 모든 URL을 직접 열고, 열린 페이지 안에 네이버폼·구글폼·모아폼 유도 링크나 QR코드가 없는지 확인하세요. 만약 있다면, 해당 글을 이번 뉴스레터에서 제거해야 합니다."
       } else {
         Write-Host "Step 3 finished with an error. Check the messages above." -ForegroundColor Yellow
       }
