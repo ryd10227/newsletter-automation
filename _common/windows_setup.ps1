@@ -127,7 +127,7 @@ function Invoke-PhotoshopAutomation {
     Write-Host "Starting Photoshop automation. Please wait..."
     $PhotoshopApplication = New-Object -ComObject "Photoshop.Application"
     $PhotoshopApplication.Visible = $true
-    $PhotoshopApplication.DoJavaScriptFile($PhotoshopRunner)
+    $null = $PhotoshopApplication.DoJavaScriptFile($PhotoshopRunner)
 
     if (Test-Path -LiteralPath $PhotoshopLog -PathType Leaf) {
       $PhotoshopStatus = Get-Content -LiteralPath $PhotoshopLog -TotalCount 1
@@ -207,8 +207,9 @@ function Show-NewsletterMenu {
   Write-Host "========================================"
   Write-Host "  1  Excel -> CSV"
   Write-Host "  2  Run Photoshop automation"
-  Write-Host "  3  VDI HTML + Mutu24 HTML"
-  Write-Host "  4  Create transfer ZIP"
+  Write-Host "  3  Create VDI HTML"
+  Write-Host "  4  Create Mutu24 HTML"
+  Write-Host "  5  Create transfer ZIP"
   Write-Host "  0  Exit"
   Write-Host "========================================"
 }
@@ -225,8 +226,11 @@ while ($true) {
         --assets-dir "$ImagesDir" `
         --best-effort
 
-      if ($LASTEXITCODE -eq 0) {
+      $Step1ExitCode = $LASTEXITCODE
+      if ($Step1ExitCode -eq 0) {
         Write-Host "Created: $Csv" -ForegroundColor Green
+      } elseif ($Step1ExitCode -eq 2) {
+        Write-Host "Created with warnings: $Csv" -ForegroundColor Yellow
       } else {
         Write-Host "Step 1 finished with an error. Check the messages above." -ForegroundColor Yellow
       }
@@ -252,7 +256,37 @@ while ($true) {
         --html "$SourceHtml" `
         --output "$VdiOutput" `
         --best-effort
-      $VdiExitCode = $LASTEXITCODE
+      $Step3ExitCode = $LASTEXITCODE
+      if ($Step3ExitCode -eq 0 -or $Step3ExitCode -eq 2) {
+        if ($Step3ExitCode -eq 0) {
+          Write-Host "Created: $VdiOutput" -ForegroundColor Green
+        } else {
+          Write-Host "Created with warnings: $VdiOutput" -ForegroundColor Yellow
+        }
+        Write-Host "============================================================" -ForegroundColor Cyan
+        Write-Host "[검수 필수] 3단계 VDI HTML 결과" -ForegroundColor Cyan
+        Write-Host "============================================================" -ForegroundColor Cyan
+        Write-Host "[ ] output\vdi_${Issue8}.html을 열어 모든 요소가 올바른 URL로 연결되는지 확인하세요."
+        Write-Host "[ ] 모든 URL을 직접 열고, 열린 페이지 안에 네이버폼·구글폼·모아폼 유도 링크나 QR코드가 없는지 확인하세요. 만약 있다면, 해당 글을 이번 뉴스레터에서 제거해야 합니다."
+        Open-ReviewFile -Path $VdiOutput
+      } else {
+        Write-Host "Step 3 finished with an error. Check the messages above." -ForegroundColor Yellow
+      }
+    }
+
+    "4" {
+      if (-not (Test-Path -LiteralPath $Csv -PathType Leaf)) {
+        Write-Host "Missing CSV. Enter 1 before entering 4." -ForegroundColor Yellow
+        continue
+      }
+      if (-not (Test-Path -LiteralPath $ResultPsd -PathType Leaf)) {
+        Write-Host "Missing Photoshop result PSD. Enter 2 before entering 4." -ForegroundColor Yellow
+        continue
+      }
+      if (-not (Test-Path -LiteralPath $VdiOutput -PathType Leaf)) {
+        Write-Host "Missing VDI HTML. Enter 3 before entering 4." -ForegroundColor Yellow
+        continue
+      }
 
       & py "$Root\3_html\mutu24.py" `
         --template "$MutuTemplate" `
@@ -262,28 +296,30 @@ while ($true) {
         --output "$MutuOutput" `
         --issue-date "$IssueDate" `
         --best-effort
-      $MutuExitCode = $LASTEXITCODE
 
-      if ($VdiExitCode -eq 0 -and $MutuExitCode -eq 0) {
-        Write-Host "Created: $VdiOutput" -ForegroundColor Green
-        Write-Host "Created: $MutuOutput" -ForegroundColor Green
+      $Step4ExitCode = $LASTEXITCODE
+      if ($Step4ExitCode -eq 0 -or $Step4ExitCode -eq 2) {
+        if ($Step4ExitCode -eq 0) {
+          Write-Host "Created: $MutuOutput" -ForegroundColor Green
+        } else {
+          Write-Host "Created with warnings: $MutuOutput" -ForegroundColor Yellow
+        }
         Write-Host "============================================================" -ForegroundColor Cyan
-        Write-Host "[검수 필수] 3단계 HTML 결과" -ForegroundColor Cyan
+        Write-Host "[검수 필수] 4단계 무투24 HTML 결과" -ForegroundColor Cyan
         Write-Host "============================================================" -ForegroundColor Cyan
-        Write-Host "[ ] output\vdi_${Issue8}.html과 output\mutu24_${Issue8}.html을 각각 열어 모든 요소가 올바른 URL로 연결되는지 확인하세요."
+        Write-Host "[ ] output\mutu24_${Issue8}.html을 열어 모든 요소가 올바른 URL로 연결되는지 확인하세요."
         Write-Host "[ ] 모든 URL을 직접 열고, 열린 페이지 안에 네이버폼·구글폼·모아폼 유도 링크나 QR코드가 없는지 확인하세요. 만약 있다면, 해당 글을 이번 뉴스레터에서 제거해야 합니다."
-        Open-ReviewFile -Path $VdiOutput
         Open-ReviewFile -Path $MutuOutput
       } else {
-        Write-Host "Step 3 finished with an error. Check the messages above." -ForegroundColor Yellow
+        Write-Host "Step 4 finished with an error. Check the messages above." -ForegroundColor Yellow
       }
     }
 
-    "4" {
+    "5" {
       & py "$Root\4_create_zip\create.py" --output-dir "$OutputDir"
 
       if ($LASTEXITCODE -ne 0) {
-        Write-Host "Step 4 finished with an error. Check the messages above." -ForegroundColor Yellow
+        Write-Host "Step 5 finished with an error. Check the messages above." -ForegroundColor Yellow
       }
     }
 
@@ -293,7 +329,7 @@ while ($true) {
     }
 
     default {
-      Write-Host "Enter 1, 2, 3, 4, or 0." -ForegroundColor Yellow
+      Write-Host "Enter 1, 2, 3, 4, 5, or 0." -ForegroundColor Yellow
     }
   }
 }

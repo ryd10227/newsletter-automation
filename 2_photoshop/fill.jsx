@@ -290,6 +290,81 @@
         }
     }
 
+    function exportVisibleLayersAboveBasePNG(sourceDocument, baseLayer, outputFolder, fileName) {
+        var sourceBounds = boundsOf(baseLayer);
+        if (sourceBounds.width <= 0 || sourceBounds.height <= 0) {
+            throw new Error(baseLayer.name + " 레이어/그룹의 크기가 0이라 PNG로 저장할 수 없습니다.");
+        }
+        var sourceParent = baseLayer.parent;
+        if (!sourceParent || sourceParent.typename !== "LayerSet") {
+            throw new Error(baseLayer.name + " 레이어/그룹이 다른 폴더 그룹 안에 있어야 합니다.");
+        }
+
+        var baseIndex = -1;
+        var i;
+        for (i = 0; i < sourceParent.layers.length; i++) {
+            if (
+                sourceParent.layers[i] === baseLayer ||
+                (
+                    sourceParent.layers[i].typename === baseLayer.typename &&
+                    sourceParent.layers[i].name === baseLayer.name
+                )
+            ) {
+                baseIndex = i;
+                break;
+            }
+        }
+        if (baseIndex < 0) {
+            throw new Error(baseLayer.name + " 레이어/그룹의 순서를 확인하지 못했습니다.");
+        }
+
+        var exportDocument = app.documents.add(
+            px(sourceDocument.width),
+            px(sourceDocument.height),
+            sourceDocument.resolution,
+            fileName.replace(/\.png$/i, ""),
+            NewDocumentMode.RGB,
+            DocumentFill.TRANSPARENT
+        );
+        try {
+            app.activeDocument = sourceDocument;
+            var copiedParent = sourceParent.duplicate(exportDocument, ElementPlacement.PLACEATBEGINNING);
+            app.activeDocument = exportDocument;
+
+            if (baseIndex >= copiedParent.layers.length) {
+                throw new Error("복제한 " + baseLayer.name + " 레이어/그룹을 찾지 못했습니다.");
+            }
+
+            // Photoshop의 layers 컬렉션은 레이어 패널 위쪽부터 아래쪽 순서입니다.
+            // bg 레이어/그룹과 그 위의 현재 보이는 형제 레이어만 합성하고 아래 레이어는 제외합니다.
+            for (i = baseIndex + 1; i < copiedParent.layers.length; i++) {
+                copiedParent.layers[i].visible = false;
+            }
+
+            // Keep the bg width and bottom edge, but allow visible artwork above
+            // the bg to extend the canvas. Trimming only the transparent top uses
+            // rendered pixels instead of unreliable smart-object layer bounds.
+            exportDocument.crop([
+                sourceBounds.left,
+                0,
+                sourceBounds.right,
+                sourceBounds.bottom
+            ]);
+            exportDocument.trim(TrimType.TRANSPARENT, true, false, false, false);
+
+            var outputFile = new File(outputFolder.fsName + "/" + fileName);
+            var options = new PNGSaveOptions();
+            options.interlaced = false;
+            exportDocument.saveAs(outputFile, options, true, Extension.LOWERCASE);
+            return outputFile;
+        } finally {
+            try {
+                exportDocument.close(SaveOptions.DONOTSAVECHANGES);
+            } catch (ignore) {}
+            app.activeDocument = sourceDocument;
+        }
+    }
+
     function exportDocumentForWeb(document, outputFile) {
         var options = new ExportOptionsSaveForWeb();
         options.format = SaveDocumentType.PNG;
@@ -304,15 +379,20 @@
     function exportRequiredPNGs(document, bannerRoot, outputFolder, warnings) {
         var folder = ensureFolder(outputFolder);
         var marketNewsRoot = findGroupAliases(document, ["해외시장뉴스"], true);
+        var results = [];
+        try {
+            if (!marketNewsRoot) {
+                throw new Error("해외시장뉴스 그룹을 찾지 못했습니다.");
+            }
+            var bgLayer = findLayerAliases(marketNewsRoot, PNG_EXPORT_LAYER_NAMES.BG_ALIASES, true);
+            if (!bgLayer) {
+                throw new Error("해외시장뉴스 안에서 bg 레이어/그룹을 찾지 못했습니다.");
+            }
+            results.push(exportVisibleLayersAboveBasePNG(document, bgLayer, folder, "bg.png"));
+        } catch (bgError) {
+            warnings.push("PNG bg: " + bgError.message);
+        }
         var targets = [
-            {
-                label: "bg",
-                fileName: "bg.png",
-                outputFolder: folder,
-                // 전체 배경인 "BG"가 아니라 해외시장뉴스 안의 정확한 "bg"를 찾습니다.
-                parent: marketNewsRoot,
-                aliases: PNG_EXPORT_LAYER_NAMES.BG_ALIASES
-            },
             {
                 label: "배너2",
                 fileName: "banner_02.png",
@@ -328,7 +408,6 @@
                 aliases: PNG_EXPORT_LAYER_NAMES.RIGHT_BANNER_ALIASES
             }
         ];
-        var results = [];
         var i;
         for (i = 0; i < targets.length; i++) {
             try {

@@ -44,6 +44,14 @@ class MarketItem:
     title: str
     top: int
     left: int
+    map_slot: int = 0
+
+
+@dataclass(frozen=True)
+class EconomyItem:
+    label: str
+    title: str
+    map_slot: int
 
 
 def clean_text(value: object) -> str:
@@ -253,78 +261,137 @@ def _text_layers(layers: Iterable[Layer]) -> List[Layer]:
     return [layer for layer in layers if layer.is_text and clean_text(layer.name)]
 
 
-def extract_psd_content(layers: Sequence[Layer]) -> Tuple[str, List[MarketItem], List[Tuple[str, str]], str, Optional[date]]:
+def split_market_location(value: str) -> Optional[Tuple[str, str]]:
+    """Parse a country/office label, tolerating a clipped final 관 character."""
+    parts = re.split(r"[ㅣ|]", clean_text(value), maxsplit=1)
+    if len(parts) != 2:
+        return None
+    country, office = (clean_text(part) for part in parts)
+    if not country or not office or not re.search(r"무역(?:관)?$", office):
+        return None
+    if office.endswith("무역"):
+        office += "관"
+    return country, office
+
+
+def assign_market_slots(items: Sequence[MarketItem]) -> List[MarketItem]:
+    if not items:
+        return []
+
+    row_tops: List[int] = []
+    for top in sorted(item.top for item in items):
+        if not row_tops or top - row_tops[-1] > 20:
+            row_tops.append(top)
+    if len(row_tops) > 3:
+        raise ValueError(f"해외시장뉴스 행을 3개 대신 {len(row_tops)}개 찾았습니다.")
+
+    left_edge = min(item.left for item in items)
+    right_edge = max(item.left for item in items)
+    column_split = (left_edge + right_edge) / 2 if right_edge - left_edge > 180 else 300
+    assigned: List[MarketItem] = []
+    for item in items:
+        row_index = min(range(len(row_tops)), key=lambda index: abs(item.top - row_tops[index]))
+        column_index = 0 if item.left < column_split else 1
+        map_slot = row_index * 2 + column_index + 1
+        assigned.append(
+            MarketItem(item.country, item.office, item.title, item.top, item.left, map_slot)
+        )
+
+    order = {map_slot: index for index, map_slot in enumerate(MARKET_LINK_SLOTS)}
+    assigned.sort(key=lambda item: order.get(item.map_slot, len(order)))
+    return assigned
+
+
+def extract_psd_content(
+    layers: Sequence[Layer],
+    best_effort: bool = False,
+    warnings: Optional[List[str]] = None,
+) -> Tuple[str, List[MarketItem], List[EconomyItem], str, Optional[date]]:
+    warnings = warnings if warnings is not None else []
+
+    def report(message: str) -> None:
+        if best_effort:
+            warnings.append(message)
+        else:
+            raise ValueError(message)
+
     texts = _text_layers(layers)
     market_heading = next((x for x in texts if "해외시장뉴스" in x.name), None)
     business_heading = next((x for x in texts if x.name == "KOTRA 사업안내"), None)
-    if market_heading is None or business_heading is None:
-        raise ValueError("PSD에서 해외시장뉴스 또는 사업안내 제목 레이어를 찾지 못했습니다.")
+    if market_heading is None:
+        report("PSD에서 해외시장뉴스 제목 레이어를 찾지 못했습니다.")
+    if business_heading is None:
+        report("PSD에서 사업안내 제목 레이어를 찾지 못했습니다.")
 
-    # The Tuesday layout puts market news first, while the Friday layout puts
-    # business notices first. Bound the market section by the next heading
-    # below it instead of assuming that the business heading is always below.
-    section_names = {
-        "KOTRA 사업안내",
-        "아카데미 교육·연수 과정",
-        "경제외교 소식",
-    }
-    following_headings = [
-        x.top for x in texts if x.name in section_names and x.top > market_heading.top
-    ]
-    market_bottom = min(following_headings) if following_headings else max(x.bottom for x in texts) + 1
-    market_zone = [x for x in texts if market_heading.top < x.top < market_bottom]
-    locations = [x for x in market_zone if "무역관" in x.name and ("ㅣ" in x.name or "|" in x.name)]
-    if len(locations) != 6:
-        raise ValueError(f"PSD에서 해외시장뉴스 무역관 레이어를 6개 대신 {len(locations)}개 찾았습니다.")
-
+    headline = ""
     market_items: List[MarketItem] = []
-    used_titles = set()
-    for location in locations:
-        candidates = [
+    if market_heading is not None:
+        # The Tuesday layout puts market news first, while the Friday layout puts
+        # business notices first. Bound the market section by the next heading
+        # below it instead of assuming that the business heading is always below.
+        section_names = {
+            "KOTRA 사업안내",
+            "아카데미 교육·연수 과정",
+            "경제외교 소식",
+        }
+        following_headings = [
+            x.top for x in texts if x.name in section_names and x.top > market_heading.top
+        ]
+        market_bottom = min(following_headings) if following_headings else max(x.bottom for x in texts) + 1
+        market_zone = [x for x in texts if market_heading.top < x.top < market_bottom]
+        locations = [x for x in market_zone if split_market_location(x.name) is not None]
+        if len(locations) != 6:
+            report(f"PSD에서 해외시장뉴스 무역관 레이어를 6개 대신 {len(locations)}개 찾았습니다.")
+
+        used_titles = set()
+        location_indexes = {location.index for location in locations}
+        for location in locations:
+            candidates = [
+                x
+                for x in market_zone
+                if x.index not in used_titles
+                and x.index not in location_indexes
+                and "해외시장뉴스" not in x.name
+                and clean_text(x.name).strip("…·. ")
+                and -5 <= x.top - location.top <= 80
+                and abs(x.left - location.left) <= 180
+            ]
+            if not candidates:
+                report(f"'{location.name}'에 대응하는 기사 제목 레이어를 찾지 못했습니다.")
+                continue
+            title_layer = min(candidates, key=lambda x: (abs(x.top - location.top), abs(x.left - location.left)))
+            used_titles.add(title_layer.index)
+            location_parts = split_market_location(location.name)
+            if location_parts is None:
+                report(f"국가/무역관 형식을 해석할 수 없습니다: {location.name}")
+                continue
+            country, office = location_parts
+            market_items.append(
+                MarketItem(country, office, clean_text(title_layer.name), location.top, location.left)
+            )
+
+        try:
+            market_items = assign_market_slots(market_items)
+        except ValueError as exc:
+            report(str(exc))
+
+        first_list_top = min((location.top for location in locations), default=None)
+        headline_candidates = [
             x
             for x in market_zone
-            if x.index not in used_titles
-            and x.index != location.index
-            and "무역관" not in x.name
+            if first_list_top is not None
+            and x.top < first_list_top
             and "해외시장뉴스" not in x.name
+            and split_market_location(x.name) is None
             and clean_text(x.name).strip("…·. ")
-            and -5 <= x.top - location.top <= 80
-            and abs(x.left - location.left) <= 180
         ]
-        if not candidates:
-            raise ValueError(f"'{location.name}'에 대응하는 기사 제목 레이어를 찾지 못했습니다.")
-        title_layer = min(candidates, key=lambda x: (abs(x.top - location.top), abs(x.left - location.left)))
-        used_titles.add(title_layer.index)
-        parts = re.split(r"[ㅣ|]", location.name, maxsplit=1)
-        if len(parts) != 2:
-            raise ValueError(f"국가/무역관 형식을 해석할 수 없습니다: {location.name}")
-        market_items.append(
-            MarketItem(clean_text(parts[0]), clean_text(parts[1]), clean_text(title_layer.name), location.top, location.left)
-        )
-
-    # Mootu24's list is column-major: left column 1-3, then right column 4-6.
-    # Text alignment makes x coordinates differ by a few pixels, so classify
-    # the columns first instead of sorting on the raw x coordinate.
-    left_edge = min(item.left for item in market_items)
-    right_edge = max(item.left for item in market_items)
-    column_split = (left_edge + right_edge) / 2
-    market_items.sort(key=lambda item: (0 if item.left < column_split else 1, item.top))
-
-    first_list_top = min(item.top for item in market_items)
-    headline_candidates = [
-        x
-        for x in market_zone
-        if x.top < first_list_top
-        and "해외시장뉴스" not in x.name
-        and "무역관" not in x.name
-        and clean_text(x.name).strip("…·. ")
-    ]
-    if not headline_candidates:
-        raise ValueError("PSD에서 해외시장뉴스 헤드라인 제목을 찾지 못했습니다.")
-    headline = max(headline_candidates, key=lambda x: len(x.name)).name
+        if headline_candidates:
+            headline = max(headline_candidates, key=lambda x: len(x.name)).name
+        else:
+            report("PSD에서 해외시장뉴스 헤드라인 제목을 찾지 못했습니다.")
 
     economy_heading = next((x for x in texts if x.name == "경제외교 소식"), None)
-    economy_items: List[Tuple[str, str]] = []
+    economy_items: List[EconomyItem] = []
     if economy_heading is not None:
         economy_layers = [
             x for x in texts if x.top > economy_heading.top and x.left < 560 and ("ㅣ" in x.name or "|" in x.name)
@@ -332,9 +399,10 @@ def extract_psd_content(layers: Sequence[Layer]) -> Tuple[str, List[MarketItem],
         economy_layers.sort(key=lambda x: x.top)
         for layer in economy_layers[:2]:
             parts = re.split(r"[ㅣ|]", layer.name, maxsplit=1)
-            economy_items.append((clean_text(parts[0]), clean_text(parts[1])))
+            map_slot = 1 if layer.top - economy_heading.top < 60 else 2
+            economy_items.append(EconomyItem(clean_text(parts[0]), clean_text(parts[1]), map_slot))
     if len(economy_items) != 2:
-        raise ValueError(f"PSD에서 경제외교 소식을 2개 대신 {len(economy_items)}개 찾았습니다.")
+        report(f"PSD에서 경제외교 소식을 2개 대신 {len(economy_items)}개 찾았습니다.")
 
     economy_banner = next((x.name for x in texts if "Help Desk" in x.name), "")
     psd_date: Optional[date] = None
@@ -371,6 +439,51 @@ def find_container(html_text: str, class_name: str, start: int = 0) -> Tuple[int
 def replace_container_inner(html_text: str, class_name: str, inner: str, start: int = 0) -> str:
     _, open_end, close_start, _ = find_container(html_text, class_name, start)
     return html_text[:open_end] + inner + html_text[close_start:]
+
+
+def market_box(item: MarketItem, href: str) -> str:
+    return (
+        '<a href="{url}" class="newsBox" target="_blank">\n'
+        '                    <div class="local">\n'
+        '                        <span>{country}</span>\n'
+        '                        <span>{office}</span>\n'
+        '                    </div>\n'
+        '                    <p>{title}</p>\n'
+        '                </a>'.format(
+            url=html.escape(href, quote=True),
+            country=html.escape(item.country),
+            office=html.escape(item.office),
+            title=html.escape(item.title),
+        )
+    )
+
+
+def replace_market_items(
+    html_text: str,
+    items: Sequence[MarketItem],
+    map_links: Dict[str, str],
+) -> Tuple[str, int]:
+    _, open_end, close_start, _ = find_container(html_text, "newsBoxes")
+    inner = html_text[open_end:close_start]
+    anchors = [
+        match
+        for match in ANCHOR_RE.finditer(inner)
+        if re.search(r'\bclass\s*=\s*(["\'])[^"\']*\bnewsBox\b', match.group(0), re.IGNORECASE)
+    ]
+    if len(anchors) != 6:
+        raise ValueError(f"HTML 해외시장뉴스 영역에서 링크를 6개 대신 {len(anchors)}개 찾았습니다.")
+
+    items_by_slot = {item.map_slot: item for item in items if item.map_slot}
+    replacements: List[Tuple[Match[str], str]] = []
+    for position, map_slot in enumerate(MARKET_LINK_SLOTS):
+        item = items_by_slot.get(map_slot)
+        href = map_links.get(f"리스트{map_slot}", "")
+        if item is not None and href:
+            replacements.append((anchors[position], market_box(item, href)))
+
+    for match, replacement in reversed(replacements):
+        inner = inner[: match.start()] + replacement + inner[match.end() :]
+    return html_text[:open_end] + inner + html_text[close_start:], len(replacements)
 
 
 def reorder_primary_sections(html_text: str, order: str) -> str:
@@ -529,7 +642,7 @@ def build_html(
     map_links: Dict[str, str],
     headline: str,
     market_items: Sequence[MarketItem],
-    economy_items: Sequence[Tuple[str, str]],
+    economy_items: Sequence[EconomyItem],
     economy_banner: str,
     section_order: str,
 ) -> str:
@@ -546,24 +659,9 @@ def build_html(
     output = update_header_date(template, issue_date)
     output = replace_named_anchor(output, "titleNews", map_links["헤드라인"], headline)
 
-    news_boxes = []
-    for slot, item in enumerate(market_items, start=1):
-        map_slot = MARKET_LINK_SLOTS[slot - 1]
-        news_boxes.append(
-            '\n                <a href="{url}" class="newsBox" target="_blank">\n'
-            '                    <div class="local">\n'
-            '                        <span>{country}</span>\n'
-            '                        <span>{office}</span>\n'
-            '                    </div>\n'
-            '                    <p>{title}</p>\n'
-            '                </a>'.format(
-                url=html.escape(map_links[f"리스트{map_slot}"], quote=True),
-                country=html.escape(item.country),
-                office=html.escape(item.office),
-                title=html.escape(item.title),
-            )
-        )
-    output = replace_container_inner(output, "newsBoxes", "".join(news_boxes) + "\n            ")
+    output, replaced_market_count = replace_market_items(output, market_items, map_links)
+    if replaced_market_count != 6:
+        raise ValueError(f"해외시장뉴스를 6개 대신 {replaced_market_count}개 입력했습니다.")
 
     business = [records[("business", slot)] for slot in range(1, 9) if ("business", slot) in records]
     academy = [records[("academy", slot)] for slot in range(1, 5) if ("academy", slot) in records]
@@ -572,15 +670,15 @@ def build_html(
     output = replace_banners(output, records, map_links)
 
     example_boxes = []
-    for slot, (label, title) in enumerate(economy_items, start=1):
+    for item in economy_items:
         example_boxes.append(
             '\n                    <a href="{url}" class="exampleBox">\n'
             '                        <span>{label}</span>\n'
             '                        <p>{title}</p>\n'
             '                    </a>'.format(
-                url=html.escape(map_links[f"경제외교{slot}"], quote=True),
-                label=html.escape(label),
-                title=html.escape(title),
+                url=html.escape(map_links[f"경제외교{item.map_slot}"], quote=True),
+                label=html.escape(item.label),
+                title=html.escape(item.title),
             )
         )
     output = replace_container_inner(output, "exampleBoxes", "".join(example_boxes) + "\n                ")
@@ -609,7 +707,7 @@ def build_html_best_effort(
     map_links: Dict[str, str],
     headline: str,
     market_items: Sequence[MarketItem],
-    economy_items: Sequence[Tuple[str, str]],
+    economy_items: Sequence[EconomyItem],
     economy_banner: str,
     section_order: str,
     warnings: List[str],
@@ -637,31 +735,19 @@ def build_html_best_effort(
     else:
         warnings.append("해외시장뉴스 헤드라인 텍스트 또는 링크가 없어 템플릿 값을 유지했습니다.")
 
-    market_link_names = [f"리스트{slot}" for slot in range(1, 7)]
-    if len(market_items) == 6 and all(map_links.get(name) for name in market_link_names):
-        news_boxes = []
-        for slot, item in enumerate(market_items, start=1):
-            map_slot = MARKET_LINK_SLOTS[slot - 1]
-            news_boxes.append(
-                '\n                <a href="{url}" class="newsBox" target="_blank">\n'
-                '                    <div class="local">\n'
-                '                        <span>{country}</span>\n'
-                '                        <span>{office}</span>\n'
-                '                    </div>\n'
-                '                    <p>{title}</p>\n'
-                '                </a>'.format(
-                    url=html.escape(map_links[f"리스트{map_slot}"], quote=True),
-                    country=html.escape(item.country),
-                    office=html.escape(item.office),
-                    title=html.escape(item.title),
+    if market_items:
+        before = output
+        try:
+            output, market_count = replace_market_items(output, market_items, map_links)
+            if market_count < len(market_items):
+                warnings.append(
+                    f"해외시장뉴스 {len(market_items)}건 중 링크가 있는 {market_count}건만 입력했습니다."
                 )
-            )
-        apply(
-            "해외시장뉴스 6건",
-            lambda value: replace_container_inner(value, "newsBoxes", "".join(news_boxes) + "\n            "),
-        )
+        except (KeyError, ValueError) as exc:
+            output = before
+            warnings.append(f"해외시장뉴스: {exc}")
     else:
-        warnings.append("해외시장뉴스 6건의 PSD 텍스트 또는 링크가 부족해 템플릿 값을 유지했습니다.")
+        warnings.append("해외시장뉴스 PSD 텍스트가 없어 템플릿 값을 유지했습니다.")
 
     business = [records[("business", slot)] for slot in range(1, 9) if ("business", slot) in records]
     academy = [records[("academy", slot)] for slot in range(1, 5) if ("academy", slot) in records]
@@ -685,17 +771,20 @@ def build_html_best_effort(
     else:
         warnings.append("홍보배너 데이터와 링크가 없어 템플릿 값을 유지했습니다.")
 
-    if len(economy_items) == 2 and all(map_links.get(f"경제외교{slot}") for slot in (1, 2)):
+    usable_economy_items = [
+        item for item in economy_items if map_links.get(f"경제외교{item.map_slot}")
+    ]
+    if usable_economy_items:
         example_boxes = []
-        for slot, (label, title) in enumerate(economy_items, start=1):
+        for item in usable_economy_items:
             example_boxes.append(
                 '\n                    <a href="{url}" class="exampleBox">\n'
                 '                        <span>{label}</span>\n'
                 '                        <p>{title}</p>\n'
                 '                    </a>'.format(
-                    url=html.escape(map_links[f"경제외교{slot}"], quote=True),
-                    label=html.escape(label),
-                    title=html.escape(title),
+                    url=html.escape(map_links[f"경제외교{item.map_slot}"], quote=True),
+                    label=html.escape(item.label),
+                    title=html.escape(item.title),
                 )
             )
         apply(
@@ -703,20 +792,20 @@ def build_html_best_effort(
             lambda value: replace_container_inner(value, "exampleBoxes", "".join(example_boxes) + "\n                "),
         )
     else:
-        warnings.append("경제외교 소식 텍스트 또는 링크가 부족해 템플릿 값을 유지했습니다.")
+        warnings.append("경제외교 소식 텍스트 또는 링크가 없어 템플릿 값을 유지했습니다.")
 
-    if economy_banner and map_links.get("경제외교 우측배너"):
+    if map_links.get("경제외교 우측배너"):
         apply(
             "경제외교 우측배너",
             lambda value: replace_named_anchor(
                 value,
                 "exampleImg",
                 map_links["경제외교 우측배너"],
-                economy_banner,
+                economy_banner or "경제외교 소식",
             ),
         )
     else:
-        warnings.append("경제외교 우측배너 텍스트 또는 링크가 없어 템플릿 값을 유지했습니다.")
+        warnings.append("경제외교 우측배너 링크가 없어 템플릿 값을 유지했습니다.")
 
     apply("해외시장뉴스/사업안내 순서", lambda value: reorder_primary_sections(value, section_order))
     return output
@@ -761,7 +850,9 @@ def main() -> int:
                 warnings.append(f"영역 순서 판별: {exc}; 템플릿 순서를 유지했습니다.")
             try:
                 layers = read_psd_layers(args.psd)
-                headline, market_items, economy_items, economy_banner, psd_date = extract_psd_content(layers)
+                headline, market_items, economy_items, economy_banner, psd_date = extract_psd_content(
+                    layers, True, warnings
+                )
             except (OSError, ValueError, struct.error) as exc:
                 headline, market_items, economy_items, economy_banner, psd_date = "", [], [], "", None
                 warnings.append(f"PSD 텍스트 추출: {exc}")
@@ -821,11 +912,12 @@ def main() -> int:
         return 1
 
     print(f"결과 HTML: {args.output}")
+    banner_slots = {2} | {key[1] for key in records if key[0] == "banner"}
     print(
-        f"입력 완료: 헤드라인 1, 해외시장뉴스 {len(market_items)}, "
+        f"입력 완료: 헤드라인 {1 if headline else 0}, 해외시장뉴스 {len(market_items)}, "
         f"사업안내 {sum(1 for key in records if key[0] == 'business')}, "
         f"아카데미 {sum(1 for key in records if key[0] == 'academy')}, "
-        f"배너 3, 경제외교 {len(economy_items)}"
+        f"배너 {len(banner_slots)}, 경제외교 {len(economy_items)}"
     )
     print("이미지 src: 변경 없음")
     print("상단 순서: " + ("사업안내 → 해외시장뉴스" if section_order == "business_first" else "해외시장뉴스 → 사업안내"))
