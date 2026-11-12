@@ -220,11 +220,12 @@ while ($true) {
 
   switch ($Choice.Trim()) {
     "1" {
-      & py "$Root\1_excel_to_csv\export.py" `
-        --xlsx "$Excel" `
-        --output-dir "$OutputDir" `
-        --assets-dir "$ImagesDir" `
-        --best-effort
+      & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass `
+        -File "$Root\1_excel_to_csv\export.ps1" `
+        -Xlsx "$Excel" `
+        -OutputDir "$OutputDir" `
+        -AssetsDir "$ImagesDir" `
+        -BestEffort
 
       $Step1ExitCode = $LASTEXITCODE
       if ($Step1ExitCode -eq 0) {
@@ -251,11 +252,12 @@ while ($true) {
     }
 
     "3" {
-      & py "$Root\3_html\vdi.py" `
-        --csv "$Csv" `
-        --html "$SourceHtml" `
-        --output "$VdiOutput" `
-        --best-effort
+      & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass `
+        -File "$Root\3_html\vdi.ps1" `
+        -Csv "$Csv" `
+        -Html "$SourceHtml" `
+        -Output "$VdiOutput" `
+        -BestEffort
       $Step3ExitCode = $LASTEXITCODE
       if ($Step3ExitCode -eq 0 -or $Step3ExitCode -eq 2) {
         if ($Step3ExitCode -eq 0) {
@@ -288,14 +290,15 @@ while ($true) {
         continue
       }
 
-      & py "$Root\3_html\mutu24.py" `
-        --template "$MutuTemplate" `
-        --csv "$Csv" `
-        --psd "$ResultPsd" `
-        --map-html "$VdiOutput" `
-        --output "$MutuOutput" `
-        --issue-date "$IssueDate" `
-        --best-effort
+      & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass `
+        -File "$Root\3_html\mutu24.ps1" `
+        -Template "$MutuTemplate" `
+        -Csv "$Csv" `
+        -Psd "$ResultPsd" `
+        -MapHtml "$VdiOutput" `
+        -Output "$MutuOutput" `
+        -IssueDate "$IssueDate" `
+        -BestEffort
 
       $Step4ExitCode = $LASTEXITCODE
       if ($Step4ExitCode -eq 0 -or $Step4ExitCode -eq 2) {
@@ -316,7 +319,9 @@ while ($true) {
     }
 
     "5" {
-      & py "$Root\4_create_zip\create.py" --output-dir "$OutputDir"
+      & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass `
+        -File "$Root\4_create_zip\create.ps1" `
+        -OutputDir "$OutputDir"
 
       if ($LASTEXITCODE -ne 0) {
         Write-Host "Step 5 finished with an error. Check the messages above." -ForegroundColor Yellow

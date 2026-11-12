@@ -35,7 +35,7 @@ def create_zip(output_dir: Path) -> Path:
     ]
     vdi_html = output_dir / f"vdi_{issue_text}.html"
     mutu_html = output_dir / f"mutu24_{issue_text}.html"
-    zip_path = output_dir / f"{issue_text}_반입.zip"
+    zip_path = output_dir / f"{issue_text}_반출.zip"
 
     if zip_path.exists():
         zip_path.unlink()
@@ -54,7 +54,7 @@ def create_zip(output_dir: Path) -> Path:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="완료된 이미지와 HTML을 반입용 ZIP으로 묶습니다.")
+    parser = argparse.ArgumentParser(description="완료된 이미지와 HTML을 반출용 ZIP으로 묶습니다.")
     parser.add_argument("--output-dir", required=True, type=Path, help="날짜 작업 폴더 아래의 output 폴더")
     return parser.parse_args()
 
@@ -66,7 +66,7 @@ def main() -> int:
     except (OSError, ValueError, zipfile.BadZipFile) as exc:
         print("오류: " + str(exc), file=sys.stderr)
         return 1
-    print("반입 ZIP: " + str(zip_path))
+    print("반출 ZIP: " + str(zip_path))
     return 0
 
 
